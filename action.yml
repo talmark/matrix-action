@@ -1,0 +1,29 @@
+name: matrix-action
+description: A action which is publishes messages to a matrix room
+branding:
+  icon: message-circle
+  color: purple
+inputs:
+  room-id:
+    required: true
+    description: The ID of the room to which messages should be published
+  status:
+    required: true
+    description: The job status. use job.status here
+  user:
+    required: false
+    description: The matrix username used to authenticate agains the matrix server
+  password:
+    required: false
+    description: The password which should be used to authenticate against the matrix server.
+  access_token:
+    required: false
+    description: The access_token which should be used to authenticate against the matrix server.
+  server:
+    required: false
+    description: The matrix server which should be used. Defaults to matrix.org
+    default: matrix.org
+runs:
+  using: node12
+  main: dist/index.js
+

@@ -1,0 +1,98 @@
+import * as core from '@actions/core'
+import * as http from '@actions/http-client'
+
+
+const runId = process.env.GITHUB_RUN_ID
+const runNumber = process.env.GITHUB_RUN_NUMBER
+const ghserver = process.env.GITHUB_SERVER_URL
+const repo = process.env.GITHUB_REPOSITORY
+const buildUrl = `${ghserver}/${repo}/actions/runs/${runId}`
+const workflow = process.env.GITHUB_WORKFLOW
+const actor = process.env.GITHUB_ACTOR
+const actorUrl = `${ghserver}/${actor}`
+
+const server = core.getInput('server') || 'https://matrix'
+const roomID = core.getInput('room-id', {required: true})
+const status = core.getInput('status', {required: true})
+const user = core.getInput('username')
+const password = core.getInput('password')
+
+let accessToken = core.getInput('access_token')
+
+async function fetchAccessToken(): Promise<void> {
+  const client = new http.HttpClient('matrix-message-action')
+  const data = {user, password, type: 'm.login.password'}
+  const reqURL = `${getBaseURL(server)}/_matrix/client/r0/login`
+  const res = await client.post(reqURL, JSON.stringify(data))
+  accessToken = JSON.parse(await res.readBody()).access_token
+}
+
+async function run(): Promise<void> {
+  if (!accessToken && !password) {
+    const message = '\'password\' or \'access_token\' must be specified'
+    core.error(message)
+    core.setFailed(message)
+    return
+  }
+  // if we dont have access_token yet we will do a login
+  if (!accessToken) {
+    await fetchAccessToken()
+  }
+
+  await sendMessage()
+
+}
+
+function getBaseURL(server: string): string {
+  if (!server.startsWith('http://') && !server.startsWith('https://')) {
+    server = `https://${server}`
+  }
+  const serverUrl = new URL(server)
+  return `${serverUrl.protocol}//${serverUrl.host}:${serverUrl.port || 8448}`
+}
+
+async function sendMessage(): Promise<void> {
+  const client = new http.HttpClient('matrix-message-action')
+  const reqURL = `${getBaseURL(server)}/_matrix/client/r0/rooms/${roomID}/send/m.room.message?access_token=${accessToken}`
+  await client.post(reqURL, JSON.stringify(getMatrixMessage()))
+  return
+}
+
+function getMatrixMessage() {
+  const message = `${status.toUpperCase()} Build #${runId} received status ${status}!`
+  let formattedBody = `<h1><span data-mx-color="${getColor()}">${status.toUpperCase()}</span></h1>`
+  formattedBody += `Build <a href="${buildUrl}"> ${repo} #${runNumber} ${workflow}</a> `
+  switch (status.toLowerCase()) {
+  case 'success':
+    formattedBody += 'was successful!'
+    break
+  case 'failure':
+    formattedBody += 'failed!'
+    break
+  case 'cancelled':
+    formattedBody += 'was cancelled!'
+    break
+  default:
+    core.warning(`Unknown build status '${status}'`)
+    formattedBody += `has status '${status}'`
+  }
+  formattedBody += `<br>triggered by <a href="${actorUrl}">${actor}</a> `
+  return {formatted_body: formattedBody, body: message, format: 'org.matrix.custom.html', msgtype: 'm.text'}
+}
+
+function getColor() {
+  switch (status.toLowerCase()) {
+  case 'success':
+    return '#00FF2D'
+  case 'cancelled':
+    return '#FFF608'
+  case 'failure':
+    return '#FF0A00'
+  default:
+    core.warning(`'${status}' is no know status switching to default font color'`)
+    return '#000000'
+  }
+}
+
+// noinspection JSIgnoredPromiseFromCall
+run()
