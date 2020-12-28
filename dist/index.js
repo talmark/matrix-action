@@ -1348,12 +1348,12 @@ var core = __importStar(__webpack_require__(186));
 var http = __importStar(__webpack_require__(925));
 var runId = process.env.GITHUB_RUN_ID;
 var runNumber = process.env.GITHUB_RUN_NUMBER;
-var ghserver = process.env.GITHUB_SERVER_URL;
+var githubServer = process.env.GITHUB_SERVER_URL;
 var repo = process.env.GITHUB_REPOSITORY;
-var buildUrl = ghserver + "/" + repo + "/actions/runs/" + runId;
+var buildURL = githubServer + "/" + repo + "/actions/runs/" + runId;
 var workflow = process.env.GITHUB_WORKFLOW;
 var actor = process.env.GITHUB_ACTOR;
-var actorUrl = ghserver + "/" + actor;
+var actorURL = githubServer + "/" + actor;
 var server = core.getInput('server') || 'https://matrix';
 var roomID = core.getInput('room-id', { required: true });
 var status = core.getInput('status', { required: true });
@@ -1398,10 +1398,17 @@ function run() {
                 case 1:
                     _a.sent();
                     _a.label = 2;
-                case 2: return [4 /*yield*/, sendMessage()];
+                case 2: return [4 /*yield*/, sendMessage()
+                    // avoid session leak
+                ];
                 case 3:
                     _a.sent();
-                    return [2 /*return*/];
+                    if (!(user && password)) return [3 /*break*/, 5];
+                    return [4 /*yield*/, logout()];
+                case 4:
+                    _a.sent();
+                    _a.label = 5;
+                case 5: return [2 /*return*/];
             }
         });
     });
@@ -1410,8 +1417,8 @@ function getBaseURL(server) {
     if (!server.startsWith('http://') && !server.startsWith('https://')) {
         server = "https://" + server;
     }
-    var serverUrl = new URL(server);
-    return serverUrl.protocol + "//" + serverUrl.host + ":" + (serverUrl.port || 8448);
+    var serverURL = new URL(server);
+    return serverURL.protocol + "//" + serverURL.host + ":" + (serverURL.port || 8448);
 }
 function sendMessage() {
     return __awaiter(this, void 0, void 0, function () {
@@ -1432,7 +1439,7 @@ function sendMessage() {
 function getMatrixMessage() {
     var message = status.toUpperCase() + " Build #" + runId + " received status " + status + "!";
     var formattedBody = "<h1><span data-mx-color=\"" + getColor() + "\">" + status.toUpperCase() + "</span></h1>";
-    formattedBody += "Build <a href=\"" + buildUrl + "\"> " + repo + " #" + runNumber + " " + workflow + "</a> ";
+    formattedBody += "Build <a href=\"" + buildURL + "\"> " + repo + " #" + runNumber + " " + workflow + "</a> ";
     switch (status.toLowerCase()) {
         case 'success':
             formattedBody += 'was successful!';
@@ -1447,8 +1454,31 @@ function getMatrixMessage() {
             core.warning("Unknown build status '" + status + "'");
             formattedBody += "has status '" + status + "'";
     }
-    formattedBody += "<br>triggered by <a href=\"" + actorUrl + "\">" + actor + "</a> ";
+    formattedBody += "<br>triggered by <a href=\"" + actorURL + "\">" + actor + "</a> ";
     return { formatted_body: formattedBody, body: message, format: 'org.matrix.custom.html', msgtype: 'm.text' };
+}
+function logout() {
+    return __awaiter(this, void 0, void 0, function () {
+        var client, reqURL, res, _a, _b;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
+                case 0:
+                    client = new http.HttpClient('matrix-message-action');
+                    reqURL = getBaseURL(server) + "/_matrix/client/r0/logout?access_token=" + accessToken;
+                    return [4 /*yield*/, client.post(reqURL, '')];
+                case 1:
+                    res = _c.sent();
+                    if (!(res.message.statusCode !== 200)) return [3 /*break*/, 3];
+                    _b = (_a = core).debug;
+                    return [4 /*yield*/, res.readBody()];
+                case 2:
+                    _b.apply(_a, [_c.sent()]);
+                    core.warning('Matrix logout failed!');
+                    _c.label = 3;
+                case 3: return [2 /*return*/];
+            }
+        });
+    });
 }
 function getColor() {
     switch (status.toLowerCase()) {

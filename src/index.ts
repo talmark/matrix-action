@@ -4,12 +4,12 @@ import * as http from '@actions/http-client'
 
 const runId = process.env.GITHUB_RUN_ID
 const runNumber = process.env.GITHUB_RUN_NUMBER
-const ghserver = process.env.GITHUB_SERVER_URL
+const githubServer = process.env.GITHUB_SERVER_URL
 const repo = process.env.GITHUB_REPOSITORY
-const buildUrl = `${ghserver}/${repo}/actions/runs/${runId}`
+const buildURL = `${githubServer}/${repo}/actions/runs/${runId}`
 const workflow = process.env.GITHUB_WORKFLOW
 const actor = process.env.GITHUB_ACTOR
-const actorUrl = `${ghserver}/${actor}`
+const actorURL = `${githubServer}/${actor}`
 
 const server = core.getInput('server') || 'https://matrix'
 const roomID = core.getInput('room-id', {required: true})
@@ -18,6 +18,13 @@ const user = core.getInput('username')
 const password = core.getInput('password')
 
 let accessToken = core.getInput('access_token')
+
+interface MatrixMessage {
+  msgtype: string
+  body: string
+  formatted_body: string
+  format: string
+}
 
 async function fetchAccessToken(): Promise<void> {
   const client = new http.HttpClient('matrix-message-action')
@@ -41,14 +48,19 @@ async function run(): Promise<void> {
 
   await sendMessage()
 
+  // avoid session leak
+  if (user && password) {
+    await logout()
+  }
+
 }
 
 function getBaseURL(server: string): string {
   if (!server.startsWith('http://') && !server.startsWith('https://')) {
     server = `https://${server}`
   }
-  const serverUrl = new URL(server)
-  return `${serverUrl.protocol}//${serverUrl.host}:${serverUrl.port || 8448}`
+  const serverURL = new URL(server)
+  return `${serverURL.protocol}//${serverURL.host}:${serverURL.port || 8448}`
 }
 
 async function sendMessage(): Promise<void> {
@@ -58,10 +70,10 @@ async function sendMessage(): Promise<void> {
   return
 }
 
-function getMatrixMessage() {
+function getMatrixMessage(): MatrixMessage {
   const message = `${status.toUpperCase()} Build #${runId} received status ${status}!`
   let formattedBody = `<h1><span data-mx-color="${getColor()}">${status.toUpperCase()}</span></h1>`
-  formattedBody += `Build <a href="${buildUrl}"> ${repo} #${runNumber} ${workflow}</a> `
+  formattedBody += `Build <a href="${buildURL}"> ${repo} #${runNumber} ${workflow}</a> `
   switch (status.toLowerCase()) {
   case 'success':
     formattedBody += 'was successful!'
@@ -76,8 +88,18 @@ function getMatrixMessage() {
     core.warning(`Unknown build status '${status}'`)
     formattedBody += `has status '${status}'`
   }
-  formattedBody += `<br>triggered by <a href="${actorUrl}">${actor}</a> `
+  formattedBody += `<br>triggered by <a href="${actorURL}">${actor}</a> `
   return {formatted_body: formattedBody, body: message, format: 'org.matrix.custom.html', msgtype: 'm.text'}
+}
+
+async function logout(): Promise<void> {
+  const client = new http.HttpClient('matrix-message-action')
+  const reqURL = `${getBaseURL(server)}/_matrix/client/r0/logout?access_token=${accessToken}`
+  const res = await client.post(reqURL, '')
+  if (res.message.statusCode !== 200) {
+    core.debug(await res.readBody())
+    core.warning('Matrix logout failed!')
+  }
 }
 
 function getColor() {
