@@ -1438,7 +1438,7 @@ function sendMessage() {
     });
 }
 function getMatrixMessage() {
-    var message = status.toUpperCase() + " Build #" + runId + " received status " + status + "!";
+    var message = status.toUpperCase() + " Build #" + runNumber + " received status " + status + "!";
     var formattedBody = "<h1><span data-mx-color=\"" + getColor() + "\">" + status.toUpperCase() + "</span></h1>";
     formattedBody += message ? "<strong>" + customMessage + "</strong><br>" : '';
     formattedBody += "Build <a href=\"" + buildURL + "\"> " + repo + " #" + runNumber + " " + workflow + "</a> ";
