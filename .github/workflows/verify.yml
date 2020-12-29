@@ -1,0 +1,29 @@
+on: push
+jobs:
+  verify:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14
+      - run: npm ci
+        name: install dependencies
+      - run: npm build
+        name: build bundle
+      - run: git diff --name-only --exit-code
+        name: Diffing
+
+  lint:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+      - name: setup node
+        uses: actions/setup-node@v2
+      - run: npm ci
+        name: install dependencies
+      - run: npm run lint
+        name: lint

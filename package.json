@@ -7,7 +7,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "prebuild": "rm -fr ./dist",
-    "build": "npx ncc build src/index.ts --license licenses.txt"
+    "build": "npx ncc build src/index.ts --license licenses.txt",
+    "lint": "npx eslint src/**"
   },
   "keywords": [],
   "author": "Kevin Stiehl <kevin.stiehl@numericas.de>",
