@@ -11,10 +11,18 @@ jobs:
           node-version: 14
       - run: npm ci
         name: install dependencies
-      - run: npm build
+      - run: npm run build
         name: build bundle
       - run: git diff --name-only --exit-code
         name: Diffing
+      - uses: Numericas/matrix-action@main
+        name: notify
+        with:
+          server: '${{ secrets.MATRIX_SERVER }}'
+          room-id: ${{ secrets.MATRIX_ROOM_ID }}
+          access_token: ${{ secrets.MATRIX_ACCESS_TOKEN }}
+          status: ${{ job.status }}
+        if: failure()
 
   lint:
     runs-on: ubuntu-20.04
@@ -27,3 +35,11 @@ jobs:
         name: install dependencies
       - run: npm run lint
         name: lint
+      - uses: Numericas/matrix-action@main
+        name: notify
+        with:
+          server: '${{ secrets.MATRIX_SERVER }}'
+          room-id: ${{ secrets.MATRIX_ROOM_ID }}
+          access_token: ${{ secrets.MATRIX_ACCESS_TOKEN }}
+          status: ${{ job.status }}
+        if: failure()
