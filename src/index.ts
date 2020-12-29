@@ -72,7 +72,7 @@ async function sendMessage(): Promise<void> {
 }
 
 function getMatrixMessage(): MatrixMessage {
-  const message = `${status.toUpperCase()} Build #${runId} received status ${status}!`
+  const message = `${status.toUpperCase()} Build #${runNumber} received status ${status}!`
   let formattedBody = `<h1><span data-mx-color="${getColor()}">${status.toUpperCase()}</span></h1>`
   formattedBody += message ? `<strong>${customMessage}</strong><br>` : ''
   formattedBody += `Build <a href="${buildURL}"> ${repo} #${runNumber} ${workflow}</a> `
