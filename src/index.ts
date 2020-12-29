@@ -35,7 +35,7 @@ async function fetchAccessToken(): Promise<void> {
 }
 
 async function run(): Promise<void> {
-  if (!accessToken && !password) {
+  if (!accessToken && (!user || !password)) {
     const message = '\'password\' or \'access_token\' must be specified'
     core.error(message)
     core.setFailed(message)
