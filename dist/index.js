@@ -1359,6 +1359,7 @@ var roomID = core.getInput('room-id', { required: true });
 var status = core.getInput('status', { required: true });
 var user = core.getInput('username');
 var password = core.getInput('password');
+var customMessage = core.getInput('message');
 var accessToken = core.getInput('access_token');
 function fetchAccessToken() {
     return __awaiter(this, void 0, void 0, function () {
@@ -1387,7 +1388,7 @@ function run() {
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
-                    if (!accessToken && !password) {
+                    if (!accessToken && (!user || !password)) {
                         message = '\'password\' or \'access_token\' must be specified';
                         core.error(message);
                         core.setFailed(message);
@@ -1439,6 +1440,7 @@ function sendMessage() {
 function getMatrixMessage() {
     var message = status.toUpperCase() + " Build #" + runId + " received status " + status + "!";
     var formattedBody = "<h1><span data-mx-color=\"" + getColor() + "\">" + status.toUpperCase() + "</span></h1>";
+    formattedBody += message ? "<strong>" + customMessage + "</strong><br>" : '';
     formattedBody += "Build <a href=\"" + buildURL + "\"> " + repo + " #" + runNumber + " " + workflow + "</a> ";
     switch (status.toLowerCase()) {
         case 'success':

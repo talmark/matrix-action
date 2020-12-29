@@ -23,6 +23,9 @@ inputs:
     required: false
     description: The matrix server which should be used. Defaults to matrix.org
     default: matrix.org
+  message:
+    required: false
+    description: An additional message that should be send.
 runs:
   using: node12
   main: dist/index.js

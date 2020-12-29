@@ -16,6 +16,7 @@ const roomID = core.getInput('room-id', {required: true})
 const status = core.getInput('status', {required: true})
 const user = core.getInput('username')
 const password = core.getInput('password')
+const customMessage = core.getInput('message')
 
 let accessToken = core.getInput('access_token')
 
@@ -73,6 +74,7 @@ async function sendMessage(): Promise<void> {
 function getMatrixMessage(): MatrixMessage {
   const message = `${status.toUpperCase()} Build #${runId} received status ${status}!`
   let formattedBody = `<h1><span data-mx-color="${getColor()}">${status.toUpperCase()}</span></h1>`
+  formattedBody += message ? `<strong>${customMessage}</strong><br>` : ''
   formattedBody += `Build <a href="${buildURL}"> ${repo} #${runNumber} ${workflow}</a> `
   switch (status.toLowerCase()) {
   case 'success':
