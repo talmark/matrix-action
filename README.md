@@ -4,6 +4,8 @@
 
 A Github Action to report the result of a workflow run to a matrix room.
 
+![image](./assets/screenshot.png)
+
 ## Usage
 
 ### Report all build results (success, failure, cancelled) to the matrix room.
