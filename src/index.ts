@@ -14,7 +14,7 @@ const actorURL = `${githubServer}/${actor}`
 const server = core.getInput('server') || 'https://matrix'
 const roomID = core.getInput('room-id', {required: true})
 const status = core.getInput('status', {required: true})
-const user = core.getInput('username')
+const user = core.getInput('user')
 const password = core.getInput('password')
 const customMessage = core.getInput('message')
 
