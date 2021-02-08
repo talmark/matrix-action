@@ -72,7 +72,7 @@ jobs:
 
 ## Access Token Authentication
 
-It is also possible to authenticate to matrix via an access token, but since this will/should expire for security reasons `username` & `password` is recommended.
+It is also possible to authenticate to matrix via an access token, but since this will/should expire for security reasons `user` & `password` is recommended.
 
 ```yaml
 name: verify
