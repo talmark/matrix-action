@@ -61,7 +61,7 @@ function getBaseURL(server: string): string {
     server = `https://${server}`
   }
   const serverURL = new URL(server)
-  return `${serverURL.protocol}//${serverURL.host}:${serverURL.port || 8448}`
+  return `${serverURL.protocol}//${serverURL.host}:${serverURL.port || 443}`
 }
 
 async function sendMessage(): Promise<void> {
